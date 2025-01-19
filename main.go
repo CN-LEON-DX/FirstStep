@@ -32,6 +32,25 @@ type TodoItemUpdate struct {
 	Status      *string `json:"status" gorm:"column:status"`
 }
 
+type Paging struct {
+	Page  int   `json:"page" form:"page"`
+	Limit int   `json:"limit" form:"limit"`
+	Total int64 `json:"total" form:"-"`
+}
+
+func (p *Paging) Process() {
+	if p.Page < 1 {
+		p.Page = 1
+	}
+	if p.Limit <= 1 {
+		p.Limit = 1
+	}
+	if p.Limit > 50 {
+		p.Limit = 1
+	}
+
+}
+
 func (TodoItem) TableName() string         { return "todo_items" }
 func (TodoItemCreation) TableName() string { return TodoItem{}.TableName() }
 func (TodoItemUpdate) TableName() string   { return TodoItem{}.TableName() }
@@ -40,6 +59,9 @@ func main() {
 
 	dsn := os.Getenv("DB_CONN")
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
+	// debug
+	db = db.Debug()
 
 	if err != nil {
 		log.Fatal(err)
@@ -182,9 +204,23 @@ func DeleteItem(db *gorm.DB) func(c *gin.Context) {
 func ListItem(db *gorm.DB) func(c *gin.Context) {
 	log.Println("Run")
 	return func(c *gin.Context) {
+		var paging Paging
+		if err := c.ShouldBind(&paging); err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		paging.Process() // change current paging when query
 
 		var result []TodoItem
-		if err := db.Table(TodoItem{}.TableName()).Order("status asc").Find(&result).Error; err != nil {
+
+		if err := db.Table(TodoItem{}.TableName()).
+			Count(&paging.Total).
+			Offset((paging.Page - 1) * paging.Limit).
+			Limit(paging.Limit).
+			Order("status asc").Find(&result).Error; err != nil {
 			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
@@ -193,6 +229,7 @@ func ListItem(db *gorm.DB) func(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"data_return": result,
+			"page":        paging,
 		})
 	}
 }
