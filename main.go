@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -20,15 +21,20 @@ type TodoItem struct {
 	UpdatedAt   *time.Time `json:"updated_at" gorm:"column:updated_at"`
 	//UpdatedAt *time.Time `json:"updated_at"`
 }
-
-func (TodoItem) TableName() string         { return "todo_items" }
-func (TodoItemCreation) TableName() string { return TodoItem{}.TableName() }
-
 type TodoItemCreation struct {
 	Id          int    `json:"id" gorm:"column:id"` // tag name json, json encode
 	Title       string `json:"title" gorm:"column:title"`
 	Description string `json:"description" gorm:"column:description"`
 }
+type TodoItemUpdate struct {
+	Title       *string `json:"title" gorm:"column:title"`
+	Description *string `json:"description" gorm:"column:description"`
+	Status      *string `json:"status" gorm:"column:status"`
+}
+
+func (TodoItem) TableName() string         { return "todo_items" }
+func (TodoItemCreation) TableName() string { return TodoItem{}.TableName() }
+func (TodoItemUpdate) TableName() string   { return TodoItem{}.TableName() }
 
 func main() {
 
@@ -46,11 +52,11 @@ func main() {
 		items := v1.Group("/items")
 		{
 			items.POST("", CreateItem(db))
-			items.GET("")
+			items.GET("", ListItem(db))
 			items.GET("/:id", GetItemById(db))
 			items.PUT("")
-			items.PATCH("/:id")
-			items.DELETE("/:id")
+			items.PATCH("/:id", UpdateInfoItem(db))
+			items.DELETE("/:id", DeleteItem(db))
 		}
 	}
 
@@ -90,13 +96,16 @@ func GetItemById(db *gorm.DB) func(c *gin.Context) {
 		var itemData TodoItem
 		// id is value pass by param and err is error thrown if convertion error
 		id, err := strconv.Atoi(c.Param("id"))
+
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error()})
 			return
 		}
+		log.Println(id)
+		fmt.Println(id)
 
-		if err := db.Where("id = ?", id).First(&itemData, id).Error; err != nil {
+		if err := db.Where("id = ?", id).First(&itemData).Error; err != nil {
 			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
@@ -105,6 +114,85 @@ func GetItemById(db *gorm.DB) func(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"data": itemData,
+		})
+	}
+}
+
+func UpdateInfoItem(db *gorm.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var updateData TodoItemUpdate
+		// id is value pass by param and err is error thrown if convertion error
+		id, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error()})
+			return
+		}
+		log.Println(id)
+
+		if err := c.ShouldBind(&updateData); err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		if err := db.Where("id = ?", id).Updates(&updateData).Error; err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"data_return": true,
+		})
+	}
+}
+
+func DeleteItem(db *gorm.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error()})
+			return
+		}
+		log.Println(id)
+
+		deletedStatus := "Deleted"
+
+		// if we dont pass the item the db won't recognize the table of DB
+		if err := db.Table(TodoItem{}.TableName()).Where("id = ?", id).Updates(&TodoItemUpdate{Status: &deletedStatus}).Error; err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"data_return": true,
+		})
+	}
+}
+
+func ListItem(db *gorm.DB) func(c *gin.Context) {
+	log.Println("Run")
+	return func(c *gin.Context) {
+
+		var result []TodoItem
+		if err := db.Table(TodoItem{}.TableName()).Order("status asc").Find(&result).Error; err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"data_return": result,
 		})
 	}
 }
