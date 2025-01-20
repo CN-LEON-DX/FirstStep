@@ -4,7 +4,6 @@ import (
 	"awesomeProject/common"
 	"awesomeProject/module/item/model"
 	ginitem "awesomeProject/module/item/transport/gin"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -34,7 +33,7 @@ func main() {
 		{
 			items.POST("", ginitem.CreateItem(db))
 			items.GET("", ListItem(db))
-			items.GET("/:id", GetItemById(db))
+			items.GET("/:id", ginitem.GetItemById(db))
 			items.PUT("")
 			items.PATCH("/:id", UpdateInfoItem(db))
 			items.DELETE("/:id", DeleteItem(db))
@@ -48,31 +47,6 @@ func main() {
 	})
 	r.Run(":3009") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 
-}
-
-func GetItemById(db *gorm.DB) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		var itemData model.TodoItem
-		// id is value pass by param and err is error thrown if convertion error
-		id, err := strconv.Atoi(c.Param("id"))
-
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error()})
-			return
-		}
-		log.Println(id)
-		fmt.Println(id)
-
-		if err := db.Where("id = ?", id).First(&itemData).Error; err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-		c.JSON(http.StatusOK, common.SimpleSuccessResponse(itemData))
-	}
 }
 
 func UpdateInfoItem(db *gorm.DB) func(c *gin.Context) {
