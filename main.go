@@ -2,6 +2,8 @@ package main
 
 import (
 	"awesomeProject/common"
+	"awesomeProject/module/item/model"
+	ginitem "awesomeProject/module/item/transport/gin"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -30,7 +32,7 @@ func main() {
 	{
 		items := v1.Group("/items")
 		{
-			items.POST("", CreateItem(db))
+			items.POST("", ginitem.CreateItem(db))
 			items.GET("", ListItem(db))
 			items.GET("/:id", GetItemById(db))
 			items.PUT("")
@@ -50,7 +52,7 @@ func main() {
 
 func GetItemById(db *gorm.DB) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		var itemData TodoItem
+		var itemData model.TodoItem
 		// id is value pass by param and err is error thrown if convertion error
 		id, err := strconv.Atoi(c.Param("id"))
 
@@ -75,7 +77,7 @@ func GetItemById(db *gorm.DB) func(c *gin.Context) {
 
 func UpdateInfoItem(db *gorm.DB) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		var updateData TodoItemUpdate
+		var updateData model.TodoItemUpdate
 		// id is value pass by param and err is error thrown if convertion error
 		id, err := strconv.Atoi(c.Param("id"))
 
@@ -119,7 +121,7 @@ func DeleteItem(db *gorm.DB) func(c *gin.Context) {
 		deletedStatus := "Deleted"
 
 		// if we dont pass the item the db won't recognize the table of DB
-		if err := db.Table(TodoItem{}.TableName()).Where("id = ?", id).Updates(&TodoItemUpdate{Status: &deletedStatus}).Error; err != nil {
+		if err := db.Table(model.TodoItem{}.TableName()).Where("id = ?", id).Updates(&model.TodoItemUpdate{Status: &deletedStatus}).Error; err != nil {
 			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
@@ -143,9 +145,9 @@ func ListItem(db *gorm.DB) func(c *gin.Context) {
 		}
 		paging.Process() // change current paging when query
 
-		var result []TodoItem
+		var result []model.TodoItem
 
-		if err := db.Table(TodoItem{}.TableName()).
+		if err := db.Table(model.TodoItem{}.TableName()).
 			Count(&paging.Total).
 			Offset((paging.Page - 1) * paging.Limit).
 			Limit(paging.Limit).
