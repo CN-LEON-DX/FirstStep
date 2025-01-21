@@ -35,7 +35,7 @@ func main() {
 			items.GET("", ListItem(db))
 			items.GET("/:id", ginitem.GetItemById(db))
 			items.PUT("")
-			items.PATCH("/:id", UpdateInfoItem(db))
+			items.PATCH("/:id", ginitem.UpdateInfoItem(db))
 			items.DELETE("/:id", DeleteItem(db))
 		}
 	}
@@ -47,38 +47,6 @@ func main() {
 	})
 	r.Run(":3009") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 
-}
-
-func UpdateInfoItem(db *gorm.DB) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		var updateData model.TodoItemUpdate
-		// id is value pass by param and err is error thrown if convertion error
-		id, err := strconv.Atoi(c.Param("id"))
-
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error()})
-			return
-		}
-		log.Println(id)
-
-		if err := c.ShouldBind(&updateData); err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
-		if err := db.Where("id = ?", id).Updates(&updateData).Error; err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-		c.JSON(http.StatusOK, common.SimpleSuccessResponse("true"))
-	}
 }
 
 func DeleteItem(db *gorm.DB) func(c *gin.Context) {
