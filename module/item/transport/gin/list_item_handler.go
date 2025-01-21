@@ -7,12 +7,10 @@ import (
 	"awesomeProject/module/item/storage"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"log"
 	"net/http"
 )
 
 func ListItem(db *gorm.DB) func(c *gin.Context) {
-	log.Println("Run")
 	return func(c *gin.Context) {
 		var queryString struct {
 			common.Paging

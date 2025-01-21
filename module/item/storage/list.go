@@ -19,7 +19,7 @@ func (s *sqlStore) ListItem(
 
 	if f := filter; f != nil {
 		if v := f.Status; v != "" {
-			db = db.Or("status = ?", v)
+			db = db.Where("status = ?", v)
 		}
 	}
 
