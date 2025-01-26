@@ -19,7 +19,6 @@ func NewGetItemBiz(store GetItemStorage) *getItemBiz {
 
 func (biz *getItemBiz) GetItemById(ctx context.Context, id int) (*model.TodoItem, error) {
 	data, err := biz.store.GetItem(ctx, map[string]interface{}{"id": id})
-
 	if err != nil {
 		return nil, err
 	}
