@@ -1,7 +1,9 @@
 package main
 
 import (
+	"awesomeProject/middleware"
 	ginitem "awesomeProject/module/item/transport/gin"
+	"awesomeProject/module/upload"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -24,8 +26,13 @@ func main() {
 	log.Println("Connected to database", db)
 
 	r := gin.Default()
+	r.Use(middleware.Recover())
+
+	r.Static("/static", "./static")
+
 	v1 := r.Group("/v1")
 	{
+		v1.PUT("/upload", upload.Upload(db))
 		items := v1.Group("/items")
 		{
 			items.POST("", ginitem.CreateItem(db))

@@ -12,15 +12,17 @@ var (
 )
 
 type TodoItem struct {
-	common.SQLModel        // embed struct
-	Title           string `json:"string" gorm:"column:title"`
-	Description     string `json:"description" gorm:"column:description"`
-	Status          string `json:"status" gorm:"column:status"`
+	common.SQLModel               // embed struct
+	Title           string        `json:"string" gorm:"column:title"`
+	Description     string        `json:"description" gorm:"column:description"`
+	Status          string        `json:"status" gorm:"column:status"`
+	Image           *common.Image `json:"image" gorm:"column:image"`
 }
 type TodoItemCreation struct {
-	Id          int    `json:"id" gorm:"column:id"` // tag name json, json encode
-	Title       string `json:"title" gorm:"column:title"`
-	Description string `json:"description" gorm:"column:description"`
+	Id          int           `json:"id" gorm:"column:id"` // tag name json, json encode
+	Title       string        `json:"title" gorm:"column:title"`
+	Description string        `json:"description" gorm:"column:description"`
+	Image       *common.Image `json:"image" gorm:"column:image"`
 }
 
 func (i *TodoItemCreation) Validate() error {
