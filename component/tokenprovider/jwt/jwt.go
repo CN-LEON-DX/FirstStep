@@ -39,8 +39,8 @@ func (j *jwtProvider) Generate(data common.TokenPayload, expiry int) (tokenprovi
 		jwt.SigningMethodHS256,
 		myClaims{
 			common.TokenPayload{
-				UId:   data.GetUId(),
-				URole: data.GetURole(),
+				UId:   data.UserId(),
+				URole: data.Role(),
 			},
 			jwt.StandardClaims{
 				ExpiresAt: now.Local().Add(time.Second * time.Duration(expiry)).Unix(),
@@ -54,4 +54,28 @@ func (j *jwtProvider) Generate(data common.TokenPayload, expiry int) (tokenprovi
 		return nil, err
 	}
 	return &token{Token: myToken, Expiry: expiry, Created: now}, nil
+}
+
+func (j *jwtProvider) Validate(myToken string) (tokenprovider.TokenPayload, error) {
+	res, err := jwt.ParseWithClaims(myToken, &myClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(j.secret), nil
+	})
+	if err != nil {
+		return nil, tokenprovider.ErrInvalidToken
+	}
+
+	// validate token
+	if !res.Valid {
+		return nil, tokenprovider.ErrInvalidToken
+	}
+
+	claims, ok := res.Claims.(*myClaims)
+
+	if !ok {
+		return nil, tokenprovider.ErrInvalidToken
+	}
+
+	// return the token
+	return claims.Payload, nil
+
 }
