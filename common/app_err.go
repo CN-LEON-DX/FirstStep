@@ -74,3 +74,7 @@ func ErrDB(err error) *AppError {
 }
 
 var RecordNotFoundError = errors.New("record not found")
+
+func CannotGetEntity(entityName string, root error) *AppError {
+	return CannotGetEntityErrorResponse(entityName, root)
+}

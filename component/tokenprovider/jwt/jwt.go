@@ -77,5 +77,4 @@ func (j *jwtProvider) Validate(myToken string) (tokenprovider.TokenPayload, erro
 
 	// return the token
 	return claims.Payload, nil
-
 }
