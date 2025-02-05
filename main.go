@@ -4,6 +4,7 @@ import (
 	"awesomeProject/middleware"
 	ginitem "awesomeProject/module/item/transport/gin"
 	"awesomeProject/module/upload"
+	ginuser "awesomeProject/module/user/transport/gin"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -33,6 +34,9 @@ func main() {
 	v1 := r.Group("/v1")
 	{
 		v1.PUT("/upload", upload.Upload(db))
+		v1.POST("/register", ginuser.RegisterUser(db))
+		v1.POST("/login", ginuser.LoginUser(db))
+
 		items := v1.Group("/items")
 		{
 			items.POST("", ginitem.CreateItem(db))

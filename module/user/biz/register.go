@@ -7,12 +7,12 @@ import (
 )
 
 type RegisterStorage interface {
-	FindUser(ctx context.Context, cond map[string]interface{}) (*model.User, error)
+	FindUser(ctx context.Context, cond map[string]interface{}, moreInfor ...string) (*model.User, error)
 	CreateUser(ctx context.Context, data *model.UserCreate) error
 }
 
 type Hasher interface {
-	Hash(password string) (string, error)
+	Hash(password string) string
 }
 
 type registerBussiness struct {
@@ -37,7 +37,7 @@ func (bussiness *registerBussiness) Register(ctx context.Context, data *model.Us
 
 	salt := common.GenSalt(50)
 
-	data.Password, _ = bussiness.hasher.Hash(data.Password + salt)
+	data.Password = bussiness.hasher.Hash(data.Password + salt)
 	data.Salt = salt
 	data.Role = "user"
 

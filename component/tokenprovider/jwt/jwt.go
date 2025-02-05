@@ -13,8 +13,12 @@ type jwtProvider struct {
 	prefix string
 }
 
-func NewTokenJWTProvider(prefix string) *jwtProvider {
-	return &jwtProvider{prefix: prefix}
+func (j *jwtProvider) SecretKey() string {
+	return j.secret
+}
+
+func NewTokenJWTProvider(prefix string, secret string) *jwtProvider {
+	return &jwtProvider{prefix: prefix, secret: secret}
 }
 
 type myClaims struct {
@@ -32,7 +36,7 @@ func (t *token) GetToken() string {
 	return t.Token
 }
 
-func (j *jwtProvider) Generate(data common.TokenPayload, expiry int) (tokenprovider.Token, error) {
+func (j *jwtProvider) Generate(data tokenprovider.TokenPayload, expiry int) (tokenprovider.Token, error) {
 	now := time.Now()
 
 	t := jwt.NewWithClaims(

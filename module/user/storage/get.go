@@ -8,11 +8,11 @@ import (
 )
 
 func (s *sqlStore) FindUser(cxt context.Context, conditions map[string]interface{}, moreInfor ...string) (*model.User, error) {
-	db := s.db.Table(model.UserLogin{}.TableName(), nil)
+	db := s.db.Table(model.UserLogin{}.TableName())
 
-	for i := range moreInfor {
-		db = db.Preload(moreInfor[i])
-	}
+	//for i := range moreInfor {
+	//	db = db.Preload(moreInfor[i])
+	//}
 
 	var user model.User
 	if err := db.Where(conditions).First(&user).Error; err != nil {

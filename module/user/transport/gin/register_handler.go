@@ -1,4 +1,4 @@
-package gin
+package ginuser
 
 import (
 	"awesomeProject/common"
@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func RegisterHandler(db *gorm.DB) func(ctx *gin.Context) {
+func RegisterUser(db *gorm.DB) func(ctx *gin.Context) {
 	return func(c *gin.Context) {
 		//db := sc.MustGet(common.DBMain).(*gorm.DB)
 		var data model.UserCreate
@@ -25,12 +25,18 @@ func RegisterHandler(db *gorm.DB) func(ctx *gin.Context) {
 		store := storage.NewSQLStore(db)
 		md5 := common.NewMd5Hash()
 
-		biz := biz.NewRegisterBussiness(store, md5)
+		bus := biz.NewRegisterBussiness(store, md5)
 
-		if err := biz.Register(c.Request.Context(), &data); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Error(),
-			})
+		if err := bus.Register(c.Request.Context(), &data); err != nil {
+
+			c.JSON(http.StatusInternalServerError,
+				common.NewCustomError(
+					err,
+					error.Error(err),
+					"Email already exists",
+					"ErrEmailExists",
+				),
+			)
 			return
 		}
 
